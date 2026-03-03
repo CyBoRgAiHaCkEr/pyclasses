@@ -29,7 +29,7 @@ if prompt := st.chat_input("Hi! What do you want to learn first?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.write(prompt)
-        st.balloons
+         st.balloons()
 
     with st.chat_message("assistant"):
         placeholder = st.empty() # Create a blank spot on the page
@@ -52,3 +52,4 @@ if prompt := st.chat_input("Hi! What do you want to learn first?"):
         placeholder.markdown(full_response) # Final update without the cursor
     
     st.session_state.messages.append({"role": "assistant", "content": full_response})
+
