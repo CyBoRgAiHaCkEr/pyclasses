@@ -1,73 +1,54 @@
 import streamlit as st
 from groq import Groq
 
-# --- CONFIG & STYLE ---
-st.set_page_config(page_title="Python Mentor", page_icon="🐍", layout="wide")
+# 1. Page Setup
+st.set_page_config(page_title="Python Teacher", page_icon="👨‍🏫")
+st.title("👨‍🏫 Your Python Mentor")
 
-# Keeping the cool dark look but making it cleaner
-st.markdown("""
-    <style>
-    .stApp { background-color: #0f1116; color: #e1e4e8; }
-    [data-testid="stSidebar"] { background-color: #161b22; border-right: 1px solid #30363d; }
-    .stChatFloatingInputContainer { background-color: #0f1116; }
-    [data-testid="stChatMessage"] { border-radius: 15px; margin-bottom: 10px; }
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- GROQ CONNECTION ---
+# 2. Check for API Key
 if "GROQ_API_KEY" not in st.secrets:
-    st.error("Please add your GROQ_API_KEY to Streamlit Secrets!")
+    st.error("Missing API Key! Please add GROQ_API_KEY to your Streamlit Secrets.")
     st.stop()
 
 client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
-# --- THE "NORMAL" SYSTEM PROMPT ---
-# This is what makes it speak like a regular person
-NORMAL_PROMPT = """
-You are a friendly, patient Python teacher. 
-Speak naturally and simply, like you're chatting with a friend over coffee.
-Avoid being overly "robotic" or "futuristic." 
-
-Your Goal: 
-1. Teach the basics of Python and Streamlit.
-2. Explain how to put code on GitHub (calling it a place to save and share code).
-3. Explain how to publish the app so others can see it.
-
-Always be encouraging. If the user makes a mistake, say 'No worries, let's fix it' 
-instead of 'System Error.' Use normal emojis like 😊, 🚀, and 👍.
-"""
-
-# --- SIDEBAR ---
-with st.sidebar:
-    st.title("👨‍🏫 Class Progress")
-    st.write("Welcome! We're going to learn Python step-by-step.")
-    st.divider()
-    if st.button("Clear Conversation"):
-        st.session_state.messages = [{"role": "system", "content": NORMAL_PROMPT}]
-        st.rerun()
-
-# --- CHAT LOGIC ---
+# 3. Simple Human Personality
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": NORMAL_PROMPT}]
+    st.session_state.messages = [
+        {"role": "system", "content": "You are a normal, friendly human teacher. Speak simply. No robot talk. Help the user learn Python, GitHub, and Streamlit step-by-step."}
+    ]
 
+# 4. Display Chat History
 for message in st.session_state.messages:
     if message["role"] != "system":
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+            st.write(message["content"])
 
-if prompt := st.chat_input("Ask me anything about Python..."):
+# 5. The Chat Logic
+if prompt := st.chat_input("Hi! What do you want to learn first?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.write(prompt)
+        st.balloons
 
     with st.chat_message("assistant"):
-        # Still using Llama 4 Scout for that 2026 speed
+        placeholder = st.empty() # Create a blank spot on the page
+        full_response = ""
+        
+        # Start the stream
         stream = client.chat.completions.create(
-            model="meta-llama/llama-4-scout-17b-16e-instruct", 
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=st.session_state.messages,
-            temperature=0.7, # Higher temperature makes it sound more human
             stream=True
         )
-        response = st.write_stream(stream)
+
+        # MANUALLY grab the text from the JSON chunks
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                text_chunk = chunk.choices[0].delta.content
+                full_response += text_chunk
+                placeholder.markdown(full_response + "▌") # Update the spot with new text
+        
+        placeholder.markdown(full_response) # Final update without the cursor
     
-    st.session_state.messages.append({"role": "assistant", "content": response})
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
