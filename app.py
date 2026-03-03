@@ -15,7 +15,7 @@ st.markdown("""
     /* Style for the chat bubbles */
     [data-testid="stChatMessage"] { background-color: #001d3d; border: 1px solid #00f2ff33; border-radius: 10px; }
     </style>
-    """, unsafe_content_html=True)
+    """, unsafe_allow_html=True)
 
 # --- SYSTEM INITIALIZATION ---
 try:
@@ -81,3 +81,4 @@ if prompt := st.chat_input("Input command (e.g., 'How do I start?')"):
         response = st.write_stream(completion)
     
     st.session_state.messages.append({"role": "assistant", "content": response})
+
